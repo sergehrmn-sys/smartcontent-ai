@@ -17,10 +17,27 @@ import streamlit as st
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-API_BASE = os.environ.get("SMARTCONTENT_API", "http://localhost:8001")
-N8N_WEBHOOK = os.environ.get(
-    "SMARTCONTENT_N8N", "http://localhost:5678/webhook/smartcontent-publish"
-)
+# URL du backend FastAPI. En local : http://localhost:8001.
+# En prod (Streamlit Cloud) : définir BACKEND_URL dans les Secrets Streamlit,
+# ex. BACKEND_URL = "https://smartcontent-ai.up.railway.app".
+# Compatibilité : on accepte aussi SMARTCONTENT_API (ancien nom) en fallback.
+def _read_secret(*keys, default=""):
+    for k in keys:
+        v = os.environ.get(k)
+        if v:
+            return v
+    try:
+        for k in keys:
+            if k in st.secrets:
+                return st.secrets[k]
+    except Exception:
+        pass
+    return default
+
+
+API_BASE = _read_secret("BACKEND_URL", "SMARTCONTENT_API", default="http://localhost:8001").rstrip("/")
+N8N_WEBHOOK = _read_secret("N8N_WEBHOOK_URL", "SMARTCONTENT_N8N",
+                          default="http://localhost:5678/webhook/smartcontent-publish")
 
 st.set_page_config(
     page_title="SmartContent AI",
