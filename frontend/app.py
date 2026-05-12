@@ -1601,6 +1601,10 @@ def api_publish(payload: dict):
     return _api("POST", "/generate/publish", json=payload, timeout=60)
 
 
+def api_send_email(payload: dict):
+    return _api("POST", "/generate/send-email", json=payload, timeout=30)
+
+
 def api_history(user_id: str, statut: str | None = None, plateforme: str | None = None):
     params = {"limit": 100}
     if statut:
@@ -2151,6 +2155,46 @@ def page_generator() -> None:
                     st.success(f"✅ Webhook OK — {r.json()}")
                 else:
                     st.error(f"❌ Échec ({r.status_code}) — {r.text}")
+            except Exception as exc:
+                st.error(f"❌ Erreur réseau : {exc}")
+
+    # === MODERNISATION 10 — Recevoir la campagne par email (Resend) ===
+    st.divider()
+    user_email_display = st.session_state.get("user_email") or "ton email d'inscription"
+    st.markdown(
+        '<div class="sc-publish-card">'
+        '<div class="sc-publish-header">'
+        '<div class="sc-publish-icon">📧</div>'
+        '<div class="sc-publish-text">'
+        '<h4>Recevoir la campagne par email</h4>'
+        f'<p>Reçois immédiatement les 12 textes + les 3 images IA dans ta boîte mail '
+        f'(<strong>{user_email_display}</strong>) pour les copier-coller ou les publier toi-même.</p>'
+        '</div>'
+        '<span class="sc-publish-status-pill">● Prêt</span>'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+    if st.button("📧 Recevoir par email", type="primary", use_container_width=True, key="btn_send_email"):
+        with st.spinner("Envoi de l'email en cours…"):
+            try:
+                r = api_send_email({
+                    "user_id": st.session_state.user_id,
+                    "content_id": gen.get("id"),
+                    "sujet": gen.get("sujet", "Ma campagne"),
+                    "content": content,
+                    "images": content.get("images") or {},
+                })
+                if r.ok:
+                    data = r.json()
+                    to = data.get("to") or user_email_display
+                    st.success(f"✅ Email envoyé à **{to}** — vérifie ta boîte mail (et les spams au cas où) 📬")
+                else:
+                    try:
+                        detail = r.json().get("detail", r.text)
+                    except Exception:
+                        detail = r.text
+                    st.error(f"❌ Échec envoi email ({r.status_code}) — {detail}")
             except Exception as exc:
                 st.error(f"❌ Erreur réseau : {exc}")
 

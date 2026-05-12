@@ -69,6 +69,22 @@ class PublishResponse(BaseModel):
     n8n_response: Any
 
 
+# -------- Email (Resend) --------
+class SendEmailRequest(BaseModel):
+    user_id: str
+    content_id: Optional[str] = None
+    sujet: str
+    content: dict[str, Any]
+    images: dict[str, Any] = Field(default_factory=dict)
+
+
+class SendEmailResponse(BaseModel):
+    ok: bool
+    to: Optional[str] = None
+    id: Optional[str] = None
+    error: Optional[str] = None
+
+
 # -------- History --------
 class HistoryItem(BaseModel):
     id: str

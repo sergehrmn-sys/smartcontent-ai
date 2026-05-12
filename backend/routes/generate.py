@@ -1,4 +1,4 @@
-"""Generate routes — content + images creation + publish via n8n."""
+"""Generate routes — content + images creation + publish via n8n + email."""
 from datetime import datetime, timezone
 
 import httpx
@@ -10,7 +10,10 @@ from backend.models.schemas import (
     GenerateResponse,
     PublishRequest,
     PublishResponse,
+    SendEmailRequest,
+    SendEmailResponse,
 )
+from backend.services.email_service import send_campaign_email
 from backend.services.openai_service import generate_multi_platform
 from backend.services.supabase_service import supabase_admin
 
@@ -104,3 +107,40 @@ def publish_content(payload: PublishRequest):
     except httpx.RequestError as exc:
         msg = "Impossible de joindre n8n. Verifie que n8n Desktop tourne sur 5678. Detail: " + str(exc)
         raise HTTPException(status_code=502, detail=msg)
+
+
+@router.post("/send-email", response_model=SendEmailResponse)
+def send_email_route(payload: SendEmailRequest):
+    """Envoie la campagne complète par email à l'adresse d'inscription du user."""
+    # 1. Récupérer l'email de l'utilisateur depuis Supabase
+    try:
+        res = supabase_admin.table("users").select("email").eq("id", payload.user_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Utilisateur introuvable.")
+        to_email = res.data[0].get("email")
+        if not to_email:
+            raise HTTPException(status_code=400, detail="L'utilisateur n'a pas d'email enregistré.")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Erreur Supabase: {exc}")
+
+    # 2. Envoyer l'email via Resend
+    result = send_campaign_email(
+        to_email=to_email,
+        sujet=payload.sujet,
+        content=payload.content,
+        images=payload.images or {},
+    )
+
+    if not result.get("ok"):
+        raise HTTPException(
+            status_code=502,
+            detail=f"Échec envoi email: {result.get('error', 'erreur inconnue')}",
+        )
+
+    return SendEmailResponse(
+        ok=True,
+        to=to_email,
+        id=result.get("id"),
+    )
