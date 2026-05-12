@@ -1,0 +1,15 @@
+# SmartContent AI — Streamlit theme (Tech SaaS violet)
+[theme]
+base = "dark"
+primaryColor = "#7c3aed"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#161a26"
+textColor = "#fafafa"
+font = "sans serif"
+
+[server]
+headless = true
+runOnSave = true
+
+[browser]
+gatherUsageStats = false

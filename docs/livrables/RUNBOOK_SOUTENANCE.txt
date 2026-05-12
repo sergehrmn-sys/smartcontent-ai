@@ -1,0 +1,196 @@
+# ============================================================================
+# SMARTCONTENT AI - RUNBOOK COMPLET PRE-SOUTENANCE
+# Auteur : Serge Tsebo - AEC IA Appliquee - College Multihexa
+# ============================================================================
+# Mode d'emploi : copie chaque BLOC (#1, #2, ...) un par un dans PowerShell
+# et execute. NE PAS tout coller en une fois - les blocs sont chronologiques.
+# Les blocs avec [LAISSER TOURNER] doivent rester ouverts dans leur fenetre.
+# ============================================================================
+
+
+# ============================================================================
+# BLOC #1 - J-7 : VERIFICATIONS PRELIMINAIRES (1 fois)
+# ============================================================================
+
+cd "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2"
+.\venv\Scripts\Activate.ps1
+python --version
+pip list | Select-String -Pattern "fastapi|streamlit|openai|supabase|bcrypt"
+
+
+# ============================================================================
+# BLOC #2 - J-7 : SMOKE TEST API (1 fois)
+# Pre-requis : le backend doit tourner (lancer BLOC #4 d'abord)
+# ============================================================================
+
+cd "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2"
+.\venv\Scripts\Activate.ps1
+python test_api.py
+
+
+# ============================================================================
+# BLOC #3 - J-3 : BACKUP COMPLET SUR GITHUB (1 fois)
+# ============================================================================
+
+cd "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2"
+git status
+git add -A
+git commit -m "chore: backup final pre-soutenance"
+git push origin main
+git log --oneline -5
+
+# Verifier que .env n'est PAS sur GitHub
+git ls-files | Select-String -Pattern "\.env$"
+# (Cette commande NE doit RIEN retourner. Si elle retourne quelque chose, alerte.)
+
+
+# ============================================================================
+# BLOC #4 - TUER LES PROCESSUS ZOMBIES SUR LES PORTS (a faire avant chaque lancement)
+# ============================================================================
+
+Get-NetTCPConnection -LocalPort 8001,8501,5678 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+Get-NetTCPConnection -LocalPort 8001,8501,5678 -ErrorAction SilentlyContinue
+# (La derniere commande NE doit RIEN retourner = ports libres)
+
+
+# ============================================================================
+# BLOC #5 - LANCER LE BACKEND FastAPI [LAISSER TOURNER]
+# Ouvrir un PowerShell dedie pour ce bloc
+# ============================================================================
+
+cd "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2"
+.\venv\Scripts\Activate.ps1
+uvicorn backend.main:app --host 0.0.0.0 --port 8001
+# (Doit afficher : "Uvicorn running on http://0.0.0.0:8001")
+# NE PAS FERMER cette fenetre pendant la soutenance.
+
+
+# ============================================================================
+# BLOC #6 - LANCER LE FRONTEND Streamlit [LAISSER TOURNER]
+# Ouvrir un AUTRE PowerShell dedie pour ce bloc
+# ============================================================================
+
+cd "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2"
+.\venv\Scripts\Activate.ps1
+streamlit run frontend/app.py --server.port 8501
+# (Doit ouvrir le navigateur sur http://localhost:8501)
+# NE PAS FERMER cette fenetre pendant la soutenance.
+
+
+# ============================================================================
+# BLOC #7 - LANCER n8n DESKTOP (manuel)
+# Pas de commande PowerShell, lancer n8n Desktop via l'icone du bureau.
+# Verifier que le workflow "SmartContent" est en mode Published (pastille verte
+# en haut a droite). Si pastille rouge ou orange : cliquer sur Publish.
+# ============================================================================
+
+
+# ============================================================================
+# BLOC #8 - VERIFICATION QUE LES 3 SERVICES REPONDENT
+# A executer 30 minutes avant la soutenance.
+# ============================================================================
+
+# Test des 3 ports
+Test-NetConnection -ComputerName localhost -Port 8001 -InformationLevel Quiet
+Test-NetConnection -ComputerName localhost -Port 8501 -InformationLevel Quiet
+Test-NetConnection -ComputerName localhost -Port 5678 -InformationLevel Quiet
+# (Les 3 doivent retourner True)
+
+# Test du health backend
+Invoke-WebRequest -Uri "http://localhost:8001/health" -UseBasicParsing | Select-Object -ExpandProperty Content
+# (Doit retourner {"status":"ok",...})
+
+# Test du webhook n8n
+Invoke-WebRequest -Uri "http://localhost:5678/webhook/smartcontent-publish" -Method POST -Body '{"ping":true}' -ContentType "application/json" -UseBasicParsing | Select-Object StatusCode
+# (Doit retourner StatusCode 200)
+
+
+# ============================================================================
+# BLOC #9 - PREPARER LE PRESSE-PAPIERS AVEC LE SUJET DE DEMO
+# A executer juste avant d'entrer en salle.
+# ============================================================================
+
+"Promotion grand opening - cafe specialty au centre-ville de Montreal" | Set-Clipboard
+Get-Clipboard
+# (Doit afficher le sujet correctement copie)
+
+
+# ============================================================================
+# BLOC #10 - COPIER LES LIVRABLES SUR LE BUREAU (acces rapide)
+# A executer la veille au soir.
+# ============================================================================
+
+Copy-Item "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2\docs\livrables\SmartContent_AI_Soutenance.pptx" "C:\Users\serge\Desktop\" -Force
+Copy-Item "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2\docs\livrables\SmartContent_AI_Memoire.pdf" "C:\Users\serge\Desktop\" -Force
+Copy-Item "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2\docs\livrables\SmartContent_AI_Pitch.pdf" "C:\Users\serge\Desktop\" -Force
+Get-ChildItem "C:\Users\serge\Desktop\" -Filter "SmartContent_AI*"
+
+
+# ============================================================================
+# BLOC #11 - CREER LE FICHIER DES SUJETS DE DEMO
+# A executer la veille au soir.
+# ============================================================================
+
+@"
+SUJET DEMO 1 (principal) :
+Promotion grand opening - cafe specialty au centre-ville de Montreal
+
+SUJET DEMO 2 (backup) :
+Lancement de notre nouvelle pizzeria napolitaine en plein coeur du Vieux-Montreal
+
+SUJET DEMO 3 (court, si probleme) :
+Soldes d'hiver -30% sur toute la collection
+"@ | Out-File -FilePath "C:\Users\serge\Desktop\sujets_demo.txt" -Encoding utf8
+Get-Content "C:\Users\serge\Desktop\sujets_demo.txt"
+
+
+# ============================================================================
+# BLOC #12 - URGENCE : RESET COMPLET SI TOUT PLANTE
+# A utiliser uniquement en dernier recours pendant la soutenance.
+# ============================================================================
+
+Get-NetTCPConnection -LocalPort 8001,8501,5678 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+Stop-Process -Name "python" -Force -ErrorAction SilentlyContinue
+Stop-Process -Name "uvicorn" -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 3
+
+cd "C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2"
+.\venv\Scripts\Activate.ps1
+
+# Lancer en arriere-plan dans 2 nouvelles fenetres PowerShell
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2'; .\venv\Scripts\Activate.ps1; uvicorn backend.main:app --port 8001"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'C:\Users\serge\OneDrive\Bureau\PROJET DE FIN ETUDES\smartcontent-ai-v2'; .\venv\Scripts\Activate.ps1; streamlit run frontend/app.py --server.port 8501"
+
+# Attendre que les services demarrent
+Start-Sleep -Seconds 15
+
+# Verifier
+Test-NetConnection -ComputerName localhost -Port 8001 -InformationLevel Quiet
+Test-NetConnection -ComputerName localhost -Port 8501 -InformationLevel Quiet
+
+
+# ============================================================================
+# BLOC #13 - CHECKLIST FINALE 5 MIN AVANT D'ENTRER EN SALLE
+# (Lecture seule - rien a executer, juste cocher mentalement)
+# ============================================================================
+#
+#   [ ] Portable charge a 100% + chargeur dans le sac
+#   [ ] Backend tourne sur 8001 (BLOC #5 OK)
+#   [ ] Streamlit tourne sur 8501 (BLOC #6 OK)
+#   [ ] n8n Desktop tourne, workflow Published (BLOC #7 OK)
+#   [ ] BLOC #8 a passe : les 3 services repondent
+#   [ ] Compte demo cree en base, login valide
+#   [ ] 2 campagnes pre-generees en historique (backup)
+#   [ ] Sujet 1 dans le presse-papiers (BLOC #9 OK)
+#   [ ] Slides PowerPoint ouvertes en mode Presentateur (F5)
+#   [ ] Memoire PDF ouvert en arriere-plan
+#   [ ] 3 onglets navigateur ouverts : Streamlit, n8n, GitHub
+#   [ ] Notifications Windows desactivees (mode Ne pas deranger)
+#   [ ] Telephone en silencieux
+#   [ ] Verre d'eau a portee de main
+#   [ ] Liste des 5 questions probables anticipees
+#
+# ============================================================================
+# FIN DU RUNBOOK
+# Bonne soutenance !
+# ============================================================================

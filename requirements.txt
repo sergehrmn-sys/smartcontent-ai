@@ -1,0 +1,15 @@
+# SmartContent AI — Python 3.14 compatible
+# ⚠️ Do NOT add: pillow, moviepy, pydantic-core (incompatible / pre-built wheels missing)
+
+fastapi
+uvicorn[standard]
+pydantic[email]
+pydantic-settings
+supabase
+openai
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+httpx
+requests
+streamlit

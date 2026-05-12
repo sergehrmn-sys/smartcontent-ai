@@ -1,0 +1,125 @@
+{
+  "name": "SmartContent — Multi-platform Publish (12 plateformes)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smartcontent-publish",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 500],
+      "webhookId": "smartcontent-publish"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = items[0].json.body || items[0].json;\nconst plateformes = body.plateformes || [];\nconst payload = body.payload || {};\nconst contentByPlatform = (payload.plateformes) || {};\n\nreturn plateformes.map(p => ({\n  json: {\n    plateforme: p,\n    user_id: body.user_id,\n    content_id: body.content_id,\n    texte: (contentByPlatform[p] && contentByPlatform[p].texte) || '',\n    hashtags: (contentByPlatform[p] && contentByPlatform[p].hashtags) || [],\n    cta: (contentByPlatform[p] && contentByPlatform[p].cta) || ''\n  }\n}));"
+      },
+      "id": "prepare-data",
+      "name": "Préparer données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 500]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "linkedin", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "linkedin" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "instagram", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "instagram" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "facebook", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "facebook" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "tiktok", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "tiktok" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "youtube_shorts", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "youtube_shorts" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "x_twitter", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "x_twitter" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "pinterest", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "pinterest" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "threads", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "threads" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "snapchat", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "snapchat" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "google_business", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "google_business" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "blog_seo", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "blog_seo" },
+            { "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.plateforme }}", "rightValue": "email", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" }, "renameOutput": true, "outputKey": "email" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-platform",
+      "name": "Switch plateformes",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [720, 500]
+    },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'linkedin', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-linkedin", "name": "Publier LinkedIn", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 60] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'instagram', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-instagram", "name": "Publier Instagram", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 140] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'facebook', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-facebook", "name": "Publier Facebook", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 220] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'tiktok', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-tiktok", "name": "Publier TikTok", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 300] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'youtube_shorts', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-youtube", "name": "Publier YouTube Shorts", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 380] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'x_twitter', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-x", "name": "Publier X / Twitter", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 460] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'pinterest', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-pinterest", "name": "Publier Pinterest", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 540] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'threads', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-threads", "name": "Publier Threads", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 620] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'snapchat', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-snapchat", "name": "Publier Snapchat", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 700] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'google_business', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-google", "name": "Publier Google Business", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 780] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'blog_seo', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-blog", "name": "Publier Blog / SEO", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 860] },
+    { "parameters": { "jsCode": "return [{ json: { plateforme: 'email', status: 'simulated', preview: ($json.texte || '').slice(0, 80) } }];" }, "id": "publish-email", "name": "Publier Email", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [960, 940] },
+    {
+      "parameters": { "options": {} },
+      "id": "merge-results",
+      "name": "Agréger résultats",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1240, 500]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, results: $items().map(i => i.json) } }}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Réponse Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1480, 500]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Préparer données", "type": "main", "index": 0 }]] },
+    "Préparer données": { "main": [[{ "node": "Switch plateformes", "type": "main", "index": 0 }]] },
+    "Switch plateformes": {
+      "main": [
+        [{ "node": "Publier LinkedIn", "type": "main", "index": 0 }],
+        [{ "node": "Publier Instagram", "type": "main", "index": 0 }],
+        [{ "node": "Publier Facebook", "type": "main", "index": 0 }],
+        [{ "node": "Publier TikTok", "type": "main", "index": 0 }],
+        [{ "node": "Publier YouTube Shorts", "type": "main", "index": 0 }],
+        [{ "node": "Publier X / Twitter", "type": "main", "index": 0 }],
+        [{ "node": "Publier Pinterest", "type": "main", "index": 0 }],
+        [{ "node": "Publier Threads", "type": "main", "index": 0 }],
+        [{ "node": "Publier Snapchat", "type": "main", "index": 0 }],
+        [{ "node": "Publier Google Business", "type": "main", "index": 0 }],
+        [{ "node": "Publier Blog / SEO", "type": "main", "index": 0 }],
+        [{ "node": "Publier Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "Publier LinkedIn":        { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Instagram":       { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Facebook":        { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier TikTok":          { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier YouTube Shorts":  { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier X / Twitter":     { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Pinterest":       { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Threads":         { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Snapchat":        { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Google Business": { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Blog / SEO":      { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Publier Email":           { "main": [[{ "node": "Agréger résultats", "type": "main", "index": 0 }]] },
+    "Agréger résultats": { "main": [[{ "node": "Réponse Webhook", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "2",
+  "id": "smartcontent-workflow-v2",
+  "tags": []
+}
